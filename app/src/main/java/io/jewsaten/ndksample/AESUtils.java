@@ -8,7 +8,7 @@ public class AESUtils {
     static {
         System.loadLibrary("AES");
     }
-    public static native String AESEncode(String content);
+    public static native byte[] AESEncode(byte[] content);
 
-    public static native String AESDecode(byte[] content);
+    public static native byte[] AESDecode(byte[] content);
 }

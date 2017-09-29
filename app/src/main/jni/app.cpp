@@ -1,52 +1,63 @@
 #include <jni.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
+#include <string>
+#include <android/log.h>
 #include "rijndael.h"
 #include "rijndael.c"
 //#include "io_jewsaten_ndksample_AESUtils.h"
+using namespace std;
 
 #define AES_KEY   "2017_app_sec_123"
 #define KEYBITS 128
 #define CLASS_PATH_NAME "io/jewsaten/ndksample/AESUtils"
-#define CLASS io_jewsaten_ndksample_AESUtils
-#define JNI_FUNC(FUN) Java_##CLASS##_##FUN
+#define LOG_TAG    "AES-JNI"
+#define LOGE(...)  __android_log_print(ANDROID_LOG_ERROR,LOG_TAG,__VA_ARGS__)
 
 
 extern "C" {
 
-char*  Jstring2CStr(JNIEnv* env, jstring jstr){
-     char* rtn = NULL;
-     jclass   clsstring = env->FindClass("java/lang/String");
-     jstring   strencode = env->NewStringUTF("utf-8");
-     jmethodID   mid = env->GetMethodID(clsstring,   "getBytes",   "(Ljava/lang/String;)[B");
-     jbyteArray   barr = (jbyteArray)env->CallObjectMethod(jstr,mid,strencode);
-     jsize   alen = env->GetArrayLength(barr);
-     jbyte*   ba = env->GetByteArrayElements(barr,JNI_FALSE);
-     if(alen > 0){
-        rtn = (char*)malloc(alen+1);
-        memcpy(rtn,ba,alen);
-        rtn[alen]=0;
-     }
-    env->ReleaseByteArrayElements(barr,ba,0);
-    return rtn;
+jbyteArray stringTojbyteArray(JNIEnv* env, string data) {
+	if (data == "") {
+		return NULL;
+	}
+	int length = strlen(data.c_str());
+	jbyteArray bytes = (env)->NewByteArray(length);
+	(env)->SetByteArrayRegion(bytes, 0, length, (jbyte*) data.c_str());
+	return bytes;
 }
 
+string jbyteArraytoString(JNIEnv* env, jbyteArray bytes) {
+	if (bytes == NULL) {
+		return NULL;
+	}
+	char* rtn = NULL;
+	jsize alen = env->GetArrayLength(bytes);
+	jbyte* ba = env->GetByteArrayElements(bytes, JNI_FALSE);
+	if (alen > 0) {
+		rtn = (char*) malloc(alen + 1);
+		memcpy(rtn, ba, alen);
+		rtn[alen] = 0;
+	}
+	string stemp(rtn);
+	free(rtn);
+	return stemp;
+}
 
-char* encrypt(char* data , const char* pass){
-	char* encryptData;
+string encrypt(string data ,string pass){
+	string encryptData="";
 	unsigned long rk[RKLENGTH(KEYBITS)];
 	unsigned char key[KEYLENGTH(KEYBITS)];
 	int keyLength=sizeof(key);
 	memset(key,0,keyLength);
-	memcpy(key,pass,keyLength);
+	memcpy(key,pass.c_str(),keyLength);
 
 	int nrounds = rijndaelSetupEncrypt(rk, key, KEYBITS);
-	int length=strlen(data);
+	int length=data.length();
 	int newLength=length+(16-length%16);
 	unsigned char srcBytes[newLength];
 	memset(srcBytes,'\0',newLength);
-	memcpy(srcBytes,data,length);
+	memcpy(srcBytes,data.c_str(),length);
 
 	unsigned char plaintext[16];
 	unsigned char ciphertext[16];
@@ -56,19 +67,19 @@ char* encrypt(char* data , const char* pass){
 		}
 	    rijndaelEncrypt(rk, nrounds, plaintext, ciphertext);
 		for(int k=0;k<16;k++){
-			encryptData = strcat(encryptData, (char*)ciphertext[k]);
+			encryptData+=ciphertext[k];
 		}
 	}
 	return encryptData;
 }
 
-char* decrypt(jbyte* data, int length, const char* pass){
-	char* decryptData;
+string decrypt(jbyte* data,int length,string pass){
+	string decryptData="";
 	unsigned long rk[RKLENGTH(KEYBITS)];
 	unsigned char key[KEYLENGTH(KEYBITS)];
 	int keyLength=sizeof(key);
 	memset(key,0,keyLength);
-	memcpy(key,pass,keyLength);
+	memcpy(key,pass.c_str(),keyLength);
 
 	int nrounds = rijndaelSetupDecrypt(rk, key, KEYBITS);
 	unsigned char srcBytes[length];
@@ -83,30 +94,31 @@ char* decrypt(jbyte* data, int length, const char* pass){
 		}
 		rijndaelDecrypt(rk, nrounds, ciphertext, plaintext);
 		for(int k=0;k<16;k++){
-			decryptData = strcat(decryptData, (char*)plaintext[k]);
+			decryptData+=plaintext[k];
 		}
 	}
 	return decryptData;
 }
 
-
-
-JNIEXPORT jstring JNICALL a(JNIEnv *env, jclass clazz, jstring content){
-	char* src=Jstring2CStr(env,content);
-	char* result=encrypt(src, AES_KEY);
-	return env->NewStringUTF(result);
+JNIEXPORT jbyteArray JNICALL JNI_ENCODE(JNIEnv *env, jclass clazz, jbyteArray content){
+    string contentStr = jbyteArraytoString(env, content);
+    LOGE("AESEncode1=%s",contentStr.c_str());
+    string chip = encrypt(contentStr, AES_KEY);
+    LOGE("AESEncode2=%s",chip.c_str());
+    return stringTojbyteArray(env, chip);
 }
 
-JNIEXPORT jstring JNICALL b(JNIEnv *env, jclass clazz, jbyteArray content){
-	jsize length = env->GetArrayLength(content);
-	jbyte* data = env->GetByteArrayElements(content, 0);
-	char* result=decrypt(data, length, AES_KEY);
-	return env->NewStringUTF(result);
+JNIEXPORT jbyteArray JNICALL JNI_DECODE(JNIEnv *env, jclass clazz, jbyteArray content){
+    jsize length = env->GetArrayLength(content);
+    jbyte* data = env->GetByteArrayElements(content, 0);
+    string result = decrypt(data, length, AES_KEY);
+    LOGE("AESDecode=%s",result.c_str());
+    return stringTojbyteArray(env, result);
 }
 
 static JNINativeMethod gMethods[] = {
-		{"AESEncode", "(Ljava/lang/String;)Ljava/lang/String;", (void*)a},
-		{"AESDecode", "([B)Ljava/lang/String;", (void*)b},
+		{"AESEncode", "([B)[B", (void*)JNI_ENCODE},
+		{"AESDecode", "([B)[B", (void*)JNI_DECODE},
 };
 
 static int registerNativeMethods(JNIEnv* env, const char* className,

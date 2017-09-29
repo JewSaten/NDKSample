@@ -10,17 +10,17 @@ extern "C" {
 /*
  * Class:     io_jewsaten_ndksample_AESUtils
  * Method:    AESEncode
- * Signature: (Ljava/lang/String;)Ljava/lang/String;
+ * Signature: ([B)[B
  */
-JNIEXPORT jstring JNICALL Java_io_jewsaten_ndksample_AESUtils_AESEncode
-  (JNIEnv *, jclass, jstring);
+JNIEXPORT jbyteArray JNICALL Java_io_jewsaten_ndksample_AESUtils_AESEncode
+  (JNIEnv *, jclass, jbyteArray);
 
 /*
  * Class:     io_jewsaten_ndksample_AESUtils
  * Method:    AESDecode
- * Signature: ([B)Ljava/lang/String;
+ * Signature: ([B)[B
  */
-JNIEXPORT jstring JNICALL Java_io_jewsaten_ndksample_AESUtils_AESDecode
+JNIEXPORT jbyteArray JNICALL Java_io_jewsaten_ndksample_AESUtils_AESDecode
   (JNIEnv *, jclass, jbyteArray);
 
 #ifdef __cplusplus
