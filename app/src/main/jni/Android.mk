@@ -4,7 +4,10 @@ include $(CLEAR_VARS)
 
 LOCAL_MODULE := AES
 
-LOCAL_SRC_FILES := rijndael.c app.cpp
+SRC_FILES := $(wildcard $(LOCAL_PATH)/*.cpp)
+SRC_FILES += $(wildcard $(LOCAL_PATH)/*.c)
+
+LOCAL_SRC_FILES := $(SRC_FILES:$(LOCAL_PATH)/%=%)
 
 LOCAL_LDLIBS := -llog
 
