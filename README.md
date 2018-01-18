@@ -9,8 +9,7 @@ JNI AES加解密
  byte[] encodedStr = AESUtils.AESEncode(source.getBytes());
  Log.e(TAG, "encodedStr: " + new String(encodedStr));
  Log.e(TAG, "decodedStr: " + new String(AESUtils.AESDecode(encodedStr)));
-
-```
+ ```
 
 ## 结果打印
 
