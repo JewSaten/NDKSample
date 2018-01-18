@@ -1,6 +1,7 @@
 # NDKSample
 JNI AES加解密
 
+[JNI的两种注册方式比较](https://jewsaten.github.io/2017/09/25/jni-simple/)
 
 ## 使用方法
 
