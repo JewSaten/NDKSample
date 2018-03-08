@@ -16,6 +16,7 @@ JNI AES加解密
 
 ![img2](/img/img2.png "img2")
 
-## 联系我
+## 联系
+
 - **Gmail：** satenjew@gmail.com
-- **工作QQ：** 1076727856
+- **个人博客：** [https://jewsaten.github.io/](https://jewsaten.github.io/)
